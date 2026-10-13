@@ -1,0 +1,133 @@
+StudentDatabaseHelper.java
+
+package com.example.sqlite_connection;
+import android.content.ContentValues; import android.content.Context; import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase; import android.database.sqlite.SQLiteOpenHelper;
+public class StudentDatabaseHelper extends SQLiteOpenHelper {
+public StudentDatabaseHelper(Context context) { super(context, "Student.db", null, 1);
+}
+@Override
+public void onCreate(SQLiteDatabase db) {
+db.execSQL("CREATE TABLE Student(" +
+"id INTEGER PRIMARY KEY AUTOINCREMENT," + "name TEXT," + "age INTEGER," +
+"department TEXT" + ");");
+}
+@Override
+public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) { db.execSQL("DROP TABLE IF EXISTS Student");
+onCreate(db);
+}
+// INSERT
+public void insertStudent(String name, int age, String department) { SQLiteDatabase db = this.getWritableDatabase();
+ContentValues values = new ContentValues();
+values.put("name", name); values.put("age", age); values.put("department", department); db.insert("Student", null, values);
+db.close();
+}
+
+// READ
+public Cursor getAllStudents() {
+SQLiteDatabase db = this.getReadableDatabase();
+Cursor cursor = db.rawQuery( "SELECT * FROM Student", null
+);
+return cursor;
+}
+// UPDATE
+public void updateStudent( int id, String name, int age, String department) {
+SQLiteDatabase db = this.getWritableDatabase();
+ContentValues values = new ContentValues();
+values.put("name", name); values.put("age", age); values.put("department", department);
+db.update(
+"Student", values, "id = ?",
+new String[]{String.valueOf(id)}
+);
+db.close();
+}
+// DELETE
+public void deleteStudent(int id) {
+SQLiteDatabase db = this.getWritableDatabase(); db.delete(
+"Student", "id = ?",
+new String[]{String.valueOf(id)}
+);
+db.close();
+}
+}
+
+
+MainActivity.java
+package com.example.sqlite_connection;
+import android.database.Cursor; import android.os.Bundle; import android.widget.Button; import android.widget.EditText; import android.widget.TextView; import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity; public class MainActivity extends AppCompatActivity {
+EditText etId, etName, etAge, etDepartment; Button btnSave, btnUpdate, btnDelete, btnView; TextView txtResult;
+StudentDatabaseHelper dbHelper; @Override
+protected void onCreate(Bundle savedInstanceState) { super.onCreate(savedInstanceState); setContentView(R.layout.activity_main);
+etId = findViewById(R.id.etId); etName = findViewById(R.id.etName); etAge = findViewById(R.id.etAge);
+etDepartment = findViewById(R.id.etDepartment);
+btnSave = findViewById(R.id.btnSave); btnUpdate = findViewById(R.id.btnUpdate); btnDelete = findViewById(R.id.btnDelete); btnView = findViewById(R.id.btnView); txtResult = findViewById(R.id.txtResult); dbHelper = new StudentDatabaseHelper(this);
+// INSERT
+btnSave.setOnClickListener(v -> {
+String name = etName.getText().toString();
+int age = Integer.parseInt( etAge.getText().toString()
+);
+String department = etDepartment.getText().toString();
+dbHelper.insertStudent(name, age, department);}); Toast.makeText(
+this,
+"Student Saved Successfully", Toast.LENGTH_SHORT
+).show();
+etName.setText("");
+etAge.setText(""); etDepartment.setText("");
+// UPDATE
+btnUpdate.setOnClickListener(v -> {
+int id = Integer.parseInt( etId.getText().toString()
+);
+String name = etName.getText().toString();
+int age = Integer.parseInt( etAge.getText().toString()
+);
+String department = etDepartment.getText().toString();
+dbHelper.updateStudent( id, name, age, department
+);
+Toast.makeText(
+this,}); "Student Updated Successfully", Toast.LENGTH_SHORT).show();
+// DELETE
+btnDelete.setOnClickListener(v -> { int id = Integer.parseInt( etId.getText().toString()); dbHelper.deleteStudent(id);}); Toast.makeText(
+this,"Student Deleted Successfully", Toast.LENGTH_SHORT).show();
+// READ btnView.setOnClickListener(v -> {
+Cursor cursor = dbHelper.getAllStudents(); StringBuilder data = new StringBuilder(); while (cursor.moveToNext()) {
+int id = cursor.getInt(0);
+String name = cursor.getString(1); int age = cursor.getInt(2); String department = cursor.getString(3);
+data.append("ID : ").append(id).append("\n");
+data.append("Name : ").append(name).append("\n");
+data.append("Age : ").append(age).append("\n"); data.append("Department : ").append(department).append("\n\n");
+}});}}
+txtResult.setText(data.toString()); cursor.close();
+
+
+activity_main.xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="20dp">
+<!-- Student ID -->
+<EditText
+android:id="@+id/etId" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Enter Student ID" android:inputType="number"/>
+<!-- Student Name -->
+<EditText
+android:id="@+id/etName" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Enter Name"/>
+<!-- Student Age -->
+<EditText
+android:id="@+id/etAge" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Enter Age" android:inputType="number"/>
+<!-- Student Department -->
+<EditText
+android:id="@+id/etDepartment" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Enter Department"/>
+<!-- Save -->
+<Button
+android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Save"/>
+<!-- Update -->
+<Button
+android:id="@+id/btnUpdate" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Update"/>
+<!-- Delete -->
+<Button
+android:id="@+id/btnDelete" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Delete"/>
+<!-- View -->
+<Button
+android:id="@+id/btnView" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="View Students"/>
+<!-- Result -->
+<TextView
+android:id="@+id/txtResult" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="18sp"/>
+</LinearLayout>
